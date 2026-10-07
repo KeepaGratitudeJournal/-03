@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>換個角度看生活 - 心情透視鏡</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: #F7FAFC;
+      color: #2D3748;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #FFFFFF;
+      border-radius: 24px;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+    .title {
+      font-size: 26px;
+      font-weight: bold;
+      color: #2C7A7B;
+      text-align: center;
+      margin: 8px 0 16px 0;
+    }
+    .guide-text {
+      font-size: 19px;
+      line-height: 1.6;
+      color: #4A5568;
+      margin-bottom: 16px;
+    }
+    .quick-tags {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .tag-btn {
+      background: #EBF8FF;
+      border: 2px solid #bee3f8;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 18px;
+      text-align: left;
+      color: #2B6CB0;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tag-btn:active { background: #BEE3F8; }
+    textarea {
+      width: 100%;
+      height: 90px;
+      font-size: 19px;
+      padding: 12px;
+      border: 2px solid #CBD5E0;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      resize: none;
+      font-family: inherit;
+    }
+    .btn-submit {
+      width: 100%;
+      background: #319795;
+      color: #FFFFFF;
+      font-size: 22px;
+      font-weight: bold;
+      border: none;
+      border-radius: 16px;
+      padding: 15px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+    .btn-submit:disabled { background: #A0AEC0; }
+    .result-box {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 16px;
+      background: #FFFAF0;
+      border: 2px solid #FEEBC8;
+      display: none;
+    }
+    .result-title {
+      font-size: 21px;
+      font-weight: bold;
+      color: #C05621;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-content {
+      font-size: 20px;
+      line-height: 1.7;
+      color: #2D3748;
+      margin-bottom: 12px;
+    }
+    .btn-speak {
+      background: #ED8936;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="title">👓 心情透視鏡</div>
+  <div class="guide-text">
+    挑一件最近讓您有點煩心或無奈的事，讓我們看看換個角度會是怎樣：
+  </div>
+
+  <!-- 長輩快捷點選按鈕，免打字 -->
+  <div class="quick-tags">
+    <button class="tag-btn" onclick="selectEvent('家人講話口氣很急、很大聲，讓我心裡不舒服')">👉 家人講話很大聲又急躁</button>
+    <button class="tag-btn" onclick="selectEvent('孫子回家都一直看手機，很少跟我講話')">👉 孩子孫子回家都盯著手機</button>
+    <button class="tag-btn" onclick="selectEvent('下雨天關在家裡不能出門散步運動，好無聊')">👉 天氣差只能關在家好悶</button>
+  </div>
+
+  <textarea id="userInput" placeholder="也可以在此打字或用語音輸入自己的小事情..."></textarea>
+
+  <button class="btn-submit" id="btnSubmit" onclick="getReframing()">請 AI 助教換角度看 ➔</button>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-title">🌟 AI 助教的溫暖發現：</div>
+    <div class="result-content" id="resultText"></div>
+    <button class="btn-speak" onclick="speakResult()">🔊 唸給我聽</button>
+  </div>
+</div>
+
+<script>
+  function selectEvent(text) {
+    document.getElementById('userInput').value = text;
+  }
+
+  // 預載常見情境的即時回應（確保無 API 金鑰暴露或斷網時依然穩定運行）
+  const presetReplies = {
+    "家人講話口氣很急、很大聲，讓我心裡不舒服": "大哥/大姐，家人講話急常常不是對您不耐煩，而是他們生活步調快或著急關心您。換個角度看，他們有話願意直接跟您說，代表心裡很依賴您這個避風港呢！",
+    "孫子回家都一直看手機，很少跟我講話": "年輕人習慣看手機，但他們願意特地回到您身邊坐著滑，代表在您家有放鬆、自在的安全感。換個角度想，有空遞上一顆橘子或一杯水，他一定能感受到您的疼愛！",
+    "下雨天關在家裡不能出門散步運動，好無聊": "下雨天雖然不能出門，但換個角度看，老天爺正給您一個舒服的休養時光。在家聽聽雨聲、泡杯熱茶做個深呼吸，也是一段專屬自己的品味好時光！"
+  };
+
+  async function getReframing() {
+    const input = document.getElementById('userInput').value.trim();
+    if (!input) {
+      alert("請點選一個情境，或寫下一件小事情喔！");
+      return;
+    }
+
+    const btn = document.getElementById('btnSubmit');
+    const resultBox = document.getElementById('resultBox');
+    const resultText = document.getElementById('resultText');
+
+    btn.disabled = true;
+    btn.innerText = "助教正在換角度思考中...";
+    resultBox.style.display = "none";
+
+    // 若符合預設情境直接顯示，若長輩自行輸入則以溫暖模版動態回應
+    setTimeout(() => {
+      let reply = presetReplies[input];
+      if (!reply) {
+        reply = `這件事確實會讓人有點鬱悶。但換個角度看，事情已經告一段落，而且您願意打開心胸來覺察它，這代表您擁有一顆非常有智慧與彈性的心。試著回想這件事裡，有沒有哪一個小細節是值得感謝或學到經驗的呢？`;
+      }
+
+      resultText.innerText = reply;
+      resultBox.style.display = "block";
+      btn.disabled = false;
+      btn.innerText = "請 AI 助教換角度看 ➔";
+
+      // 自動朗讀回饋
+      speakResult();
+    }, 1000);
+  }
+
+  function speakResult() {
+    const text = document.getElementById('resultText').innerText;
+    if ('speechSynthesis' in window && text) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-TW';
+      utter.rate = 0.85;
+      window.speechSynthesis.speak(utter);
+    }
+  }
+</script>
+</body>
+</html>
